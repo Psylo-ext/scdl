@@ -101,6 +101,9 @@ from soundcloud import (BasicAlbumPlaylist, BasicTrack, MiniTrack, SoundCloud,
 
 from scdl import __version__, utils
 
+from android.os import Environment
+from com.arthenica.mobileffmpeg import FFmpeg
+
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logging.getLogger("requests").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -126,10 +129,9 @@ def main():
     Main function, parses the URL from command line arguments
     """
 
-    # exit if ffmpeg not installed
+    # ffmpeg is experimental for android
     if not is_ffmpeg_available():
-        logger.error("ffmpeg is not installed")
-        sys.exit(1)
+        logger.error("ffmpeg is mayb buggy")
 
     # Parse arguments
     arguments = docopt(__doc__, version=__version__)
@@ -607,7 +609,7 @@ def download_original_file(client: SoundCloud, track: BasicTrack, title: str, pl
         logger.info("Converting to .flac...")
         newfilename = limit_filename_length(filename[:-4], ".flac")
 
-        commands = ["ffmpeg", "-i", filename, newfilename, "-loglevel", "error"]
+        commands = [FFmpeg.execute("-i", filename, newfilename, "-loglevel", "error")]
         logger.debug(f"Commands: {commands}")
         subprocess.call(commands)
         os.remove(filename)
@@ -674,7 +676,7 @@ def download_hls(client: SoundCloud, track: BasicTrack, title: str, playlist_inf
     filename_path = os.path.abspath(filename)
 
     p = subprocess.Popen(
-        ["ffmpeg", "-i", url, "-c", "copy", filename_path, "-loglevel", "error"],
+        [FFmpeg.execute("-i", url, "-c", "copy", filename_path, "-loglevel", "error")],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
